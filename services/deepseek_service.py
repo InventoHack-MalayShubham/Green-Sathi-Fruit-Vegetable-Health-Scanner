@@ -15,6 +15,7 @@ class DeepSeekRecommender:
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json"
         }
+        self.timeout=20
 
     def generate_recommendations(self, user_data):
         prompt = f"""

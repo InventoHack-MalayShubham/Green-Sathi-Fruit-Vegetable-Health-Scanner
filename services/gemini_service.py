@@ -19,7 +19,7 @@ class GeminiHealthAnalyzer:
             "HTTP-Referer": "https://freshcheck-pro.com",
             "X-Title": "FreshCheck Pro"
         }
-
+        self.timeout = 30
     def analyze_image(self, image_path):
         try:
             with open(image_path, "rb") as f:
