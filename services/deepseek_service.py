@@ -54,7 +54,7 @@ Give all the answers in english only.
             
         except requests.exceptions.RequestException as e:
             print(f"API Request Error: {str(e)}")
-            return "Unable to generate recommendations at the moment."
+            return "Free trials have exhausted, trials will be refereshed at 5:00 AM.Unable to generate recommendations at the moment."
         except (KeyError, ValueError, AttributeError) as e:
             print(f"Response Parsing Error: {str(e)}")
             return "Error processing recommendations."
