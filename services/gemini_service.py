@@ -63,7 +63,7 @@ Do not include any additional text or explanation. Only return the JSON object."
             print(f"Gemini API Error: {str(e)}")
             return {
                 "error": f"Gemini API Error: {str(e)}",
-                "item": "Unknown",
+                "item": "Sorry for incovinience, free trials have exhausted, trials will be refereshed at 5:00 AM. Unable to generate recommendations at the moment.",
                 "type": "Unknown",
                 "status": "uncertain",
                 "confidence": 0.0,
