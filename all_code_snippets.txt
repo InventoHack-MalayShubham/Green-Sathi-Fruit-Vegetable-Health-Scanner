@@ -1,9 +1,9 @@
 
 
------ File: D:\ML Folders\ml_env\GitHub\task_2 (6)\task_2\backend\all_code_snippets.txt -----
+----- File: D:\ML Folders\ml_env\GitHub\GreenSathi\Green-Sathi-Fruit-Vegetable-Health-Scanner\all_code_snippets.txt -----
 
 
------ File: D:\ML Folders\ml_env\GitHub\task_2 (6)\task_2\backend\app.py -----
+----- File: D:\ML Folders\ml_env\GitHub\GreenSathi\Green-Sathi-Fruit-Vegetable-Health-Scanner\app.py -----
 import os
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from flask_sqlalchemy import SQLAlchemy
@@ -285,11 +285,11 @@ if __name__ == '__main__':
         db.create_all()
     app.run(host = '0.0.0.0',port=5000,debug=True) 
 
------ File: D:\ML Folders\ml_env\GitHub\task_2 (6)\task_2\backend\copy_utils.py -----
+----- File: D:\ML Folders\ml_env\GitHub\GreenSathi\Green-Sathi-Fruit-Vegetable-Health-Scanner\copy_utils.py -----
 import os
 
 # Root directory to start searching from
-ROOT_DIR = r"D:\ML Folders\ml_env\GitHub\task_2 (6)\task_2\backend"
+ROOT_DIR = r"D:\ML Folders\ml_env\GitHub\GreenSathi\Green-Sathi-Fruit-Vegetable-Health-Scanner"
 
 # File extensions to include
 INCLUDE_EXTENSIONS = {'.py', '.js', '.css', '.html', '.txt'}
@@ -320,7 +320,7 @@ if __name__ == "__main__":
     copy_code_snippets()
 
 
------ File: D:\ML Folders\ml_env\GitHub\task_2 (6)\task_2\backend\models.py -----
+----- File: D:\ML Folders\ml_env\GitHub\GreenSathi\Green-Sathi-Fruit-Vegetable-Health-Scanner\models.py -----
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from datetime import datetime
@@ -352,7 +352,7 @@ class ScanHistory(db.Model):
     recommendations = db.Column(db.Text, nullable=True)
     synergic_fruits = db.Column(db.Text, nullable=True) 
 
------ File: D:\ML Folders\ml_env\GitHub\task_2 (6)\task_2\backend\requirements.txt -----
+----- File: D:\ML Folders\ml_env\GitHub\GreenSathi\Green-Sathi-Fruit-Vegetable-Health-Scanner\requirements.txt -----
 Flask
 Flask-SQLAlchemy
 Flask-Login
@@ -360,7 +360,7 @@ python-dotenv
 requests
 Pillow 
 
------ File: D:\ML Folders\ml_env\GitHub\task_2 (6)\task_2\backend\services\deepseek_service.py -----
+----- File: D:\ML Folders\ml_env\GitHub\GreenSathi\Green-Sathi-Fruit-Vegetable-Health-Scanner\services\deepseek_service.py -----
 import requests
 import os
 from dotenv import load_dotenv
@@ -424,7 +424,7 @@ Give all the answers in english only.
             print(f"Unexpected Error: {str(e)}")
             return "An unexpected error occurred while generating recommendations." 
 
------ File: D:\ML Folders\ml_env\GitHub\task_2 (6)\task_2\backend\services\gemini_service.py -----
+----- File: D:\ML Folders\ml_env\GitHub\GreenSathi\Green-Sathi-Fruit-Vegetable-Health-Scanner\services\gemini_service.py -----
 import base64
 import requests
 import json
@@ -530,7 +530,7 @@ Do not include any additional text or explanation. Only return the JSON object."
                 "storage_tips": "Unable to analyze due to technical issues"
             } 
 
------ File: D:\ML Folders\ml_env\GitHub\task_2 (6)\task_2\backend\services\usda_service.py -----
+----- File: D:\ML Folders\ml_env\GitHub\GreenSathi\Green-Sathi-Fruit-Vegetable-Health-Scanner\services\usda_service.py -----
 import requests
 import os
 from dotenv import load_dotenv
@@ -594,7 +594,7 @@ class USDAClient:
             for key in self.nutrient_map
         } 
 
------ File: D:\ML Folders\ml_env\GitHub\task_2 (6)\task_2\backend\static\css\style.css -----
+----- File: D:\ML Folders\ml_env\GitHub\GreenSathi\Green-Sathi-Fruit-Vegetable-Health-Scanner\static\css\style.css -----
 * {
     margin: 0;
     padding: -20px;
@@ -1911,7 +1911,7 @@ header {
 }
 
 
------ File: D:\ML Folders\ml_env\GitHub\task_2 (6)\task_2\backend\static\js\scan.js -----
+----- File: D:\ML Folders\ml_env\GitHub\GreenSathi\Green-Sathi-Fruit-Vegetable-Health-Scanner\static\js\scan.js -----
 document.addEventListener('DOMContentLoaded', function() {
     // Tab switching functionality
     const tabs = document.querySelectorAll('.tab-btn');
@@ -2060,7 +2060,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 }); 
 
------ File: D:\ML Folders\ml_env\GitHub\task_2 (6)\task_2\backend\static\js\script.js -----
+----- File: D:\ML Folders\ml_env\GitHub\GreenSathi\Green-Sathi-Fruit-Vegetable-Health-Scanner\static\js\script.js -----
 function displayRecommendations(recommendations) {
     const recommendationsList = document.getElementById('recommendationsList');
     recommendationsList.innerHTML = '';
@@ -2245,7 +2245,7 @@ takePictureBtn.style.display = 'none';
 retakePictureBtn.style.display = 'none';
 preview.style.display = 'none'; 
 
------ File: D:\ML Folders\ml_env\GitHub\task_2 (6)\task_2\backend\templates\about.html -----
+----- File: D:\ML Folders\ml_env\GitHub\GreenSathi\Green-Sathi-Fruit-Vegetable-Health-Scanner\templates\about.html -----
 {% extends 'base.html' %}
 {% block title %}About | GreenScan{% endblock %}
 
@@ -2776,7 +2776,7 @@ preview.style.display = 'none';
 </script>
 {% endblock %}
 
------ File: D:\ML Folders\ml_env\GitHub\task_2 (6)\task_2\backend\templates\base.html -----
+----- File: D:\ML Folders\ml_env\GitHub\GreenSathi\Green-Sathi-Fruit-Vegetable-Health-Scanner\templates\base.html -----
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -2824,7 +2824,7 @@ preview.style.display = 'none';
 </html>
 
 
------ File: D:\ML Folders\ml_env\GitHub\task_2 (6)\task_2\backend\templates\history.html -----
+----- File: D:\ML Folders\ml_env\GitHub\GreenSathi\Green-Sathi-Fruit-Vegetable-Health-Scanner\templates\history.html -----
 {% extends 'base.html' %}
 {% block title %}Scan History | GreenScan{% endblock %}
 {% block content %}
@@ -2907,16 +2907,16 @@ preview.style.display = 'none';
 {% endblock %}
 
 
------ File: D:\ML Folders\ml_env\GitHub\task_2 (6)\task_2\backend\templates\home.html -----
+----- File: D:\ML Folders\ml_env\GitHub\GreenSathi\Green-Sathi-Fruit-Vegetable-Health-Scanner\templates\home.html -----
 {% extends 'base.html' %}
 {% block title %}Home | GreenScan{% endblock %}
 
 {% block content %}
 <style>
     :root {
-        --primary: #2e7d32;
-        --primary-light: #60ad5e;
-        --primary-dark: #1b5e20;
+        --primary: #8f8f8f;
+        --primary-light: #eff4ef;
+        --primary-dark: #646464;
         --secondary: #ff8f00;
         --secondary-light: #ffc046;
         --secondary-dark: #c56000;
@@ -3804,7 +3804,7 @@ preview.style.display = 'none';
 
 {% endblock %}
 
------ File: D:\ML Folders\ml_env\GitHub\task_2 (6)\task_2\backend\templates\index.html -----
+----- File: D:\ML Folders\ml_env\GitHub\GreenSathi\Green-Sathi-Fruit-Vegetable-Health-Scanner\templates\index.html -----
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -3867,7 +3867,7 @@ preview.style.display = 'none';
 </body>
 </html> 
 
------ File: D:\ML Folders\ml_env\GitHub\task_2 (6)\task_2\backend\templates\login.html -----
+----- File: D:\ML Folders\ml_env\GitHub\GreenSathi\Green-Sathi-Fruit-Vegetable-Health-Scanner\templates\login.html -----
 {% extends 'base.html' %}
 {% block title %}Login | GreenScan{% endblock %}
 
@@ -3975,7 +3975,7 @@ preview.style.display = 'none';
 {% endblock %}
 
 
------ File: D:\ML Folders\ml_env\GitHub\task_2 (6)\task_2\backend\templates\profile.html -----
+----- File: D:\ML Folders\ml_env\GitHub\GreenSathi\Green-Sathi-Fruit-Vegetable-Health-Scanner\templates\profile.html -----
 {% extends 'base.html' %}
 {% block title %}Profile | GreenScan{% endblock %}
 
@@ -4144,7 +4144,7 @@ preview.style.display = 'none';
 {% endblock %}
 
 
------ File: D:\ML Folders\ml_env\GitHub\task_2 (6)\task_2\backend\templates\register.html -----
+----- File: D:\ML Folders\ml_env\GitHub\GreenSathi\Green-Sathi-Fruit-Vegetable-Health-Scanner\templates\register.html -----
 {% extends 'base.html' %}
 {% block title %}Register | GreenScan{% endblock %}
 
@@ -4290,11 +4290,117 @@ preview.style.display = 'none';
 {% endblock %}
 
 
------ File: D:\ML Folders\ml_env\GitHub\task_2 (6)\task_2\backend\templates\scan.html -----
-{% extends 'base.html' %} 
+----- File: D:\ML Folders\ml_env\GitHub\GreenSathi\Green-Sathi-Fruit-Vegetable-Health-Scanner\templates\scan.html -----
+{% extends 'base.html' %}
 {% block title %}Scan | GreenScan{% endblock %}
 
 {% block content %}
+<style>
+    /* Yellow-Orange Scan Buttons */
+    .scan-btn, .tab-btn, .camera-btn {
+        background: linear-gradient(to right, #FFA000, #FF8F00);
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 2rem;
+        font-size: 1rem;
+        font-weight: bold;
+        cursor: pointer;
+        transition: background 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+        margin: 0.3rem;
+    }
+
+    .scan-btn:hover, .tab-btn:hover, .camera-btn:hover {
+        background: linear-gradient(to right, #FB8C00, #EF6C00);
+    }
+
+    .tab-btn.active {
+        box-shadow: inset 0 0 0 3px white;
+    }
+
+    .file-label {
+        background: white;
+        border: 2px dashed #FFA000;
+        padding: 1rem;
+        border-radius: 12px;
+        display: inline-block;
+        cursor: pointer;
+        transition: background 0.3s;
+        font-weight: bold;
+        color: #FB8C00;
+    }
+
+    .file-label:hover {
+        background: #FFF3E0;
+    }
+
+    .file-input {
+        display: none;
+    }
+
+    .file-name {
+        display: block;
+        margin-top: 0.5rem;
+        font-size: 0.9rem;
+        color: #444;
+    }
+
+    .scan-section h2 {
+        text-align: center;
+        font-size: 1.8rem;
+        margin-bottom: 1.5rem;
+        color: #2e7d32;
+    }
+
+    .scan-form {
+        text-align: center;
+        margin-top: 1rem;
+        padding: 1rem;
+    }
+
+    .scan-result {
+        margin-top: 2rem;
+        background: #ffffffcc;
+        padding: 2rem;
+        border-radius: 12px;
+    }
+
+    .meta-item {
+        margin: 0.5rem 0;
+    }
+
+    .meta-label {
+        font-weight: bold;
+    }
+
+    .nutrition-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 1rem;
+    }
+
+    .nutrition-item {
+        background: #f9fbe7;
+        padding: 1rem;
+        border-radius: 8px;
+        text-align: center;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+
+    .synergic-box .formatted-text {
+        margin-top: 1rem;
+        padding: 1rem;
+        background: #fffde7;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+</style>
+
 <div class="page-bg">
     <section class="scan-section">
         <h2>Scan a Fruit or Plant</h2>
@@ -4302,8 +4408,8 @@ preview.style.display = 'none';
         <!-- Upload/Camera Tabs -->
         <div class="scan-options">
             <div class="option-tabs">
-                <button class="tab-btn active" data-target="#upload-tab">Upload Image</button>
-                <button class="tab-btn" data-target="#camera-tab">Use Camera</button>
+                <button class="tab-btn active" data-target="#upload-tab">📁 Upload Image</button>
+                <button class="tab-btn" data-target="#camera-tab">📷 Use Camera</button>
             </div>
 
             <!-- Upload/Camera Form -->
@@ -4313,7 +4419,7 @@ preview.style.display = 'none';
                     <div class="file-input-wrapper">
                         <input type="file" name="image" accept="image/*" id="fileInput" class="file-input">
                         <label for="fileInput" class="file-label">
-                            <span class="icon">📁</span>
+                            <span class="icon">📂</span>
                             <span class="text">Choose a file</span>
                         </label>
                         <span class="file-name" id="fileName">No file chosen</span>
@@ -4335,7 +4441,7 @@ preview.style.display = 'none';
                     </div>
                 </div>
 
-                <button type="submit" class="scan-btn">Analyze</button>
+                <button type="submit" class="scan-btn">🚀 Analyze</button>
             </form>
         </div>
 

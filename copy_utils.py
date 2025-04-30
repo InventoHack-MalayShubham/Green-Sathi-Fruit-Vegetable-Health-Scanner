@@ -1,7 +1,7 @@
 import os
 
 # Root directory to start searching from
-ROOT_DIR = r"D:\ML Folders\ml_env\GitHub\task_2 (6)\task_2\backend"
+ROOT_DIR = r"D:\ML Folders\ml_env\GitHub\GreenSathi\Green-Sathi-Fruit-Vegetable-Health-Scanner"
 
 # File extensions to include
 INCLUDE_EXTENSIONS = {'.py', '.js', '.css', '.html', '.txt'}
