@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% block title %}Scan History | GreenScan{% endblock %}
+{% block content %}
+<div class="page-bg">
+    <section class="history-section">
+        <h2>Scan History</h2>
+        {% if scans %}
+            {% for scan in scans %}
+            <div class="scan-result">
+                <!-- Image -->
+                <img src="{{ url_for('static', filename='uploads/' + scan.image_filename) }}" alt="Scan Image" class="scan-preview">
+
+                <!-- Header Info -->
+                <div class="result-header-box">
+                    <div class="meta-item">
+                        <span class="meta-label">Date:</span>
+                        <span class="meta-value">{{ scan.date.strftime('%Y-%m-%d %H:%M') }}</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">Fruit:</span>
+                        <span class="meta-value">{{ scan.fruit_name }}</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">Status:</span>
+                        <span class="meta-value">{{ scan.health_status }}</span>
+                    </div>
+                </div>
+
+                <!-- Nutrition Info -->
+                <div class="nutrition-box">
+                    <h4>Nutrition</h4>
+                    <div class="nutrition-grid">
+                        {% set nutrition = scan.nutrition|json_decode %}
+                        {% if nutrition %}
+                            {% for key, value in nutrition.items() %}
+                            <div class="nutrition-item">
+                                <span class="label">{{ key|replace('_', ' ')|title }}</span>
+                                <span class="value">
+                                    {% if key == 'calories' %}
+                                        {{ value }} kcal
+                                    {% elif key in ['protein', 'carbs', 'fiber', 'sugars', 'fat'] %}
+                                        {{ value }}g
+                                    {% elif key in ['vitamin_c', 'iron', 'calcium', 'potassium'] %}
+                                        {{ value }}mg
+                                    {% else %}
+                                        {{ value }}
+                                    {% endif %}
+                                </span>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="nutrition-item">
+                                <span class="label">No nutrition data available</span>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Synergic Fruits -->
+                <div class="synergic-box">
+                    <h4>Synergic Fruits</h4>
+                    <div class="formatted-text">
+                        {{ scan.synergic_fruits|markdown|safe }}
+                    </div>
+                </div>
+
+                <!-- Delete Button -->
+                <div class="history-actions">
+                    <form method="POST" action="/history/delete/{{ scan.id }}" style="display:inline;">
+                        <button type="submit" class="delete-btn">Delete</button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p>No scans yet.</p>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}
