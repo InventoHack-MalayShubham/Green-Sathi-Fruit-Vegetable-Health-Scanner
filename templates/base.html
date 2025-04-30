@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}GreenScan{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="logo">
+                <a href="/">Green<span>Scan</span></a>
+            </div>
+
+            <!-- Mobile toggle icon -->
+            <div class="menu-toggle" onclick="toggleMenu()">☰</div>
+
+            <ul class="nav-links" id="navMenu">
+                <li><a href="/">Home</a></li>
+                <li><a href="/scan">Scan</a></li>
+                <li><a href="/history">History</a></li>
+                <li><a href="/profile">Profile</a></li>
+                <li><a href="/about">About</a></li>
+                {% if current_user.is_authenticated %}
+                <li><a href="/logout" class="logout-btn">Logout</a></li>
+                {% else %}
+                <li><a href="/login">Login</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <script>
+        function toggleMenu() {
+            const nav = document.getElementById('navMenu');
+            nav.classList.toggle('active');
+        }
+    </script>
+</body>
+</html>
