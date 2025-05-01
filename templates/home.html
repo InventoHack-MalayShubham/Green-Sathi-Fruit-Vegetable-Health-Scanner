@@ -5,7 +5,7 @@
 <style>
     :root {
         --primary: #8f8f8f;
-        --primary-light: #eff4ef;
+        --primary-light: #4c4d4c;
         --primary-dark: #646464;
         --secondary: #ff8f00;
         --secondary-light: #ffc046;
@@ -724,19 +724,33 @@
 </section>
 
 <!-- User Greeting Section -->
-<section class="user-greeting section">
-  <div class="container" style="text-align: center; margin-top: 2rem;">
+<section class="user-greeting section" 
+    style = "
+            background-color: #c7fcc7;
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin: 1.5rem auto;
+            max-width: 900px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            text-align: center;
+            font-family: 'Segoe UI', sans-serif;
+            color: #573b2c;
+        ">
+
+  <div class="container" style="text-align: center; margin-top: 1.5rem;">
     {% if current_user.is_authenticated %}
       <p style="font-size: 1.2rem;">
         Welcome back, <strong>{{ current_user.username }}</strong>! 🎉
       </p>
-      <p>
-        <a href="{{ url_for('profile') }}" class="btn btn-secondary">Go to Profile</a>
-        |
-        <a href="{{ url_for('logout') }}" class="btn btn-outline">Logout</a>
-      </p>
+      <div class="btn-group">
+        <p>
+            <a href="{{ url_for('profile') }}" class="btn btn-primary"style="background-color: #ffab64;" >Go to Profile </a>
+            |
+            <a href="{{ url_for('logout') }}" class="btn btn-outline">Logout</a>
+        </p>
+    </div>
     {% else %}
-      <p style="font-size: 1.2rem;">
+      <p style="font-size: 1.2rem;color:#fe8523;">
         Welcome to <strong>GreenSathi</strong>! 🚀 Please
         <a href="{{ url_for('login') }}">log in</a> or
         <a href="{{ url_for('register') }}">register</a> to access personalized features.
