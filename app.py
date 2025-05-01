@@ -12,6 +12,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 import markdown
 
+
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev_secret_key')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
@@ -90,12 +91,10 @@ def load_user(user_id):
 
 @app.route('/')
 def index():
-    if not current_user.is_authenticated:
-        return redirect(url_for('login'))
     return redirect(url_for('home'))
 
 @app.route('/home')
-@login_required
+# @login_required
 def home():
     return render_template('home.html')
 
@@ -103,9 +102,12 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'png', 'jpg', 'jpeg'}
 
 @app.route('/scan', methods=['GET', 'POST'])
-@login_required
+# @login_required
 def scan():
     if request.method == 'POST':
+        if not current_user.is_authenticated:
+            flash("Please log in to analyze images.")
+            return redirect(url_for('login'))
         file = request.files.get('image')
         if not file or file.filename == '':
             flash('No file selected')
@@ -123,7 +125,7 @@ def scan():
             'date': datetime.now(),
             'fruit_name': '',
             'status': '',
-            'nutrition': {},
+            # 'nutrition': {},
             'synergic_fruits': '',
             'analysis': ''
         })()
@@ -145,7 +147,12 @@ def scan():
                 'weight': current_user.weight,
                 'height': current_user.height,
                 'diet_plan': current_user.diet_goal,
+                'diet_type': current_user.diet_type,
+                'age': current_user.age,
                 'region': request.form.get('region', 'India'),
+                'allergies': current_user.allergies,
+                'activity_level': current_user.activity_level,
+                'gender': current_user.gender,
                 'current_fruit': result.fruit_name
             }
             deepseek = DeepSeekRecommender()
@@ -274,7 +281,8 @@ def about():
 
 # TODO: Register blueprints for auth, scan, history, profile, about
 
+with app.app_context():
+    db.create_all()
+
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
     app.run(host = '0.0.0.0',port=5000,debug=True) 

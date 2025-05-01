@@ -112,6 +112,13 @@
     <section class="scan-section">
         <h2>Scan a Fruit or Plant</h2>
 
+        <!-- 🔒 Login Warning -->
+        {% if not current_user.is_authenticated %}
+        <div class="alert alert-warning" style="background: #fff3cd; color: #856404; padding: 1rem; border-radius: 6px; margin-bottom: 1rem; text-align: center;">
+            <strong>Note:</strong> You must <a href="{{ url_for('login') }}">log in</a> to analyze images and get recommendations.
+        </div>
+        {% endif %}
+
         <!-- Upload/Camera Tabs -->
         <div class="scan-options">
             <div class="option-tabs">
@@ -155,10 +162,8 @@
         <!-- Scan Result -->
         {% if result %}
         <div class="scan-result">
-            <!-- Image Preview -->
             <img src="{{ url_for('static', filename='uploads/' + result.image_filename) }}" alt="Scanned Image" class="scan-preview">
 
-            <!-- Meta Information -->
             <div class="result-header-box">
                 <div class="meta-item">
                     <span class="meta-label">Date:</span>
@@ -172,9 +177,12 @@
                     <span class="meta-label">Status:</span>
                     <span class="meta-value">{{ result.status }}</span>
                 </div>
+                <div class="meta-item">
+                    <span class="meta-label">Status:</span>
+                    <span class="meta-value">{{ result.analysis }}</span>
+                </div>
             </div>
 
-            <!-- Nutrition Section -->
             <div class="nutrition-box">
                 <h4>Nutrition</h4>
                 <div class="nutrition-grid">
@@ -197,7 +205,6 @@
                 </div>
             </div>
 
-            <!-- Synergic Fruits Section -->
             <div class="synergic-box">
                 <h4>Synergic Fruits</h4>
                 <div class="formatted-text">
@@ -208,5 +215,6 @@
         {% endif %}
     </section>
 </div>
+
 <script src="{{ url_for('static', filename='js/scan.js') }}"></script>
 {% endblock %}

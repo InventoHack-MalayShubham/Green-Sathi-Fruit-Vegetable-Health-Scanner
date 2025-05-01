@@ -14,7 +14,7 @@
         --light-gray: #f8f9fa;
         --medium-gray: #e9ecef;
         --dark-gray: #212529;
-        --text-gray: #495057;
+        --text-gray: #808c98;
         --shadow-sm: 0 1px 3px rgba(0,0,0,0.12);
         --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
         --shadow-lg: 0 10px 25px rgba(0,0,0,0.1);
@@ -721,6 +721,28 @@
             </a>
         </div>
     </div>
+</section>
+
+<!-- User Greeting Section -->
+<section class="user-greeting section">
+  <div class="container" style="text-align: center; margin-top: 2rem;">
+    {% if current_user.is_authenticated %}
+      <p style="font-size: 1.2rem;">
+        Welcome back, <strong>{{ current_user.username }}</strong>! 🎉
+      </p>
+      <p>
+        <a href="{{ url_for('profile') }}" class="btn btn-secondary">Go to Profile</a>
+        |
+        <a href="{{ url_for('logout') }}" class="btn btn-outline">Logout</a>
+      </p>
+    {% else %}
+      <p style="font-size: 1.2rem;">
+        Welcome to <strong>GreenSathi</strong>! 🚀 Please
+        <a href="{{ url_for('login') }}">log in</a> or
+        <a href="{{ url_for('register') }}">register</a> to access personalized features.
+      </p>
+    {% endif %}
+  </div>
 </section>
 
 <!-- Features Section -->

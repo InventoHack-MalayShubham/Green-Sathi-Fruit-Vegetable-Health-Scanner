@@ -18,6 +18,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 import markdown
 
+
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev_secret_key')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
@@ -96,12 +97,10 @@ def load_user(user_id):
 
 @app.route('/')
 def index():
-    if not current_user.is_authenticated:
-        return redirect(url_for('login'))
     return redirect(url_for('home'))
 
 @app.route('/home')
-@login_required
+# @login_required
 def home():
     return render_template('home.html')
 
@@ -109,9 +108,12 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'png', 'jpg', 'jpeg'}
 
 @app.route('/scan', methods=['GET', 'POST'])
-@login_required
+# @login_required
 def scan():
     if request.method == 'POST':
+        if not current_user.is_authenticated:
+            flash("Please log in to analyze images.")
+            return redirect(url_for('login'))
         file = request.files.get('image')
         if not file or file.filename == '':
             flash('No file selected')
@@ -129,7 +131,7 @@ def scan():
             'date': datetime.now(),
             'fruit_name': '',
             'status': '',
-            'nutrition': {},
+            # 'nutrition': {},
             'synergic_fruits': '',
             'analysis': ''
         })()
@@ -151,7 +153,12 @@ def scan():
                 'weight': current_user.weight,
                 'height': current_user.height,
                 'diet_plan': current_user.diet_goal,
+                'diet_type': current_user.diet_type,
+                'age': current_user.age,
                 'region': request.form.get('region', 'India'),
+                'allergies': current_user.allergies,
+                'activity_level': current_user.activity_level,
+                'gender': current_user.gender,
                 'current_fruit': result.fruit_name
             }
             deepseek = DeepSeekRecommender()
@@ -280,9 +287,10 @@ def about():
 
 # TODO: Register blueprints for auth, scan, history, profile, about
 
+with app.app_context():
+    db.create_all()
+
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
     app.run(host = '0.0.0.0',port=5000,debug=True) 
 
 ----- File: D:\ML Folders\ml_env\GitHub\GreenSathi\Green-Sathi-Fruit-Vegetable-Health-Scanner\copy_utils.py -----
@@ -353,12 +361,34 @@ class ScanHistory(db.Model):
     synergic_fruits = db.Column(db.Text, nullable=True) 
 
 ----- File: D:\ML Folders\ml_env\GitHub\GreenSathi\Green-Sathi-Fruit-Vegetable-Health-Scanner\requirements.txt -----
-Flask
-Flask-SQLAlchemy
-Flask-Login
-python-dotenv
-requests
-Pillow 
+alembic==1.15.2
+blinker==1.9.0
+certifi==2025.4.26
+charset-normalizer==3.4.1
+click==8.1.8
+colorama==0.4.6
+Flask==2.3.2
+Flask-JWT-Extended==4.7.1
+Flask-Login==0.6.3
+Flask-Migrate==4.1.0
+Flask-SQLAlchemy==3.1.1
+greenlet==3.2.1
+idna==3.10
+itsdangerous==2.2.0
+Jinja2==3.1.6
+Mako==1.3.10
+Markdown==3.5.2
+MarkupSafe==3.0.2
+pillow==10.2.0
+psycopg2-binary==2.9.10
+PyJWT==2.10.1
+python-dotenv==1.0.0
+requests==2.31.0
+SQLAlchemy==2.0.40
+typing_extensions==4.13.2
+urllib3==2.4.0
+Werkzeug==2.3.7
+gunicorn
 
 ----- File: D:\ML Folders\ml_env\GitHub\GreenSathi\Green-Sathi-Fruit-Vegetable-Health-Scanner\services\deepseek_service.py -----
 import requests
@@ -378,10 +408,11 @@ class DeepSeekRecommender:
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json"
         }
+        self.timeout=20
 
     def generate_recommendations(self, user_data):
         prompt = f"""
-I am {user_data['weight']} kg, my height is {user_data['height']} feet, my diet plan is {user_data['diet_plan']}, I am from {user_data['region']}, 
+I am {user_data['weight']} kg, my height is {user_data['height']} feet, my diet plan is {user_data['diet_plan']},I am a {user_data['diet_type']}, I am from India, My gender is {user_data['gender']}, I am {user_data['age']} years old.
 I am currently eating {user_data['current_fruit']}.
 Based on the present season, my locality, BMI, and diet plan,
 Tell me 5 fruits I should eat to complete my nutrient level and follow my diet chart.
@@ -389,6 +420,23 @@ Just give names and reasons—nothing else.
 I know the nutrient value of {user_data['current_fruit']}, so skip that but explain how it's beneficial and any precautions.
 
 Keep it concise.
+Example:
+1. **Fruit Name**: 
+    - **Reason for recommendation**: Why this fruit is recommended.
+    - **Precautions**: Any precautions to take while consuming this fruit.
+    - **Benefits**: Benefits of this fruit.
+--------------------------------------------------------------
+2. **Fruit Name**:
+    - **Reason for recommendation**: Why this fruit is recommended.
+    - **Precautions**: Any precautions to take while consuming this fruit.
+    - **Benefits**: Benefits of this fruit.
+---------------------------------------------------------------
+
+.....simillary recommend 5 fruits.
+---------------------------------------------------------------
+Then:
+**Benefits of {user_data['current_fruit']}**:
+**Precautions of {user_data['current_fruit']}**:
 
 Give all the answers in english only.
 """
@@ -416,13 +464,14 @@ Give all the answers in english only.
             
         except requests.exceptions.RequestException as e:
             print(f"API Request Error: {str(e)}")
-            return "Unable to generate recommendations at the moment."
+            return "Sorry for incovinience, free trials have exhausted, trials will be refereshed at 5:00 AM. Unable to generate recommendations at the moment."
         except (KeyError, ValueError, AttributeError) as e:
             print(f"Response Parsing Error: {str(e)}")
             return "Error processing recommendations."
         except Exception as e:
             print(f"Unexpected Error: {str(e)}")
             return "An unexpected error occurred while generating recommendations." 
+
 
 ----- File: D:\ML Folders\ml_env\GitHub\GreenSathi\Green-Sathi-Fruit-Vegetable-Health-Scanner\services\gemini_service.py -----
 import base64
@@ -446,7 +495,7 @@ class GeminiHealthAnalyzer:
             "HTTP-Referer": "https://freshcheck-pro.com",
             "X-Title": "FreshCheck Pro"
         }
-
+        self.timeout = 30
     def analyze_image(self, image_path):
         try:
             with open(image_path, "rb") as f:
@@ -490,7 +539,7 @@ Do not include any additional text or explanation. Only return the JSON object."
             print(f"Gemini API Error: {str(e)}")
             return {
                 "error": f"Gemini API Error: {str(e)}",
-                "item": "Unknown",
+                "item": "Sorry for incovinience, free trials have exhausted, trials will be refereshed at 5:00 AM. Unable to identify the item at the moment.",
                 "type": "Unknown",
                 "status": "uncertain",
                 "confidence": 0.0,
@@ -529,6 +578,7 @@ Do not include any additional text or explanation. Only return the JSON object."
                 "issues": ["Parsing Error"],
                 "storage_tips": "Unable to analyze due to technical issues"
             } 
+
 
 ----- File: D:\ML Folders\ml_env\GitHub\GreenSathi\Green-Sathi-Fruit-Vegetable-Health-Scanner\services\usda_service.py -----
 import requests
@@ -2924,7 +2974,7 @@ preview.style.display = 'none';
         --light-gray: #f8f9fa;
         --medium-gray: #e9ecef;
         --dark-gray: #212529;
-        --text-gray: #495057;
+        --text-gray: #808c98;
         --shadow-sm: 0 1px 3px rgba(0,0,0,0.12);
         --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
         --shadow-lg: 0 10px 25px rgba(0,0,0,0.1);
@@ -3633,6 +3683,28 @@ preview.style.display = 'none';
     </div>
 </section>
 
+<!-- User Greeting Section -->
+<section class="user-greeting section">
+  <div class="container" style="text-align: center; margin-top: 2rem;">
+    {% if current_user.is_authenticated %}
+      <p style="font-size: 1.2rem;">
+        Welcome back, <strong>{{ current_user.username }}</strong>! 🎉
+      </p>
+      <p>
+        <a href="{{ url_for('profile') }}" class="btn btn-secondary">Go to Profile</a>
+        |
+        <a href="{{ url_for('logout') }}" class="btn btn-outline">Logout</a>
+      </p>
+    {% else %}
+      <p style="font-size: 1.2rem;">
+        Welcome to <strong>GreenSathi</strong>! 🚀 Please
+        <a href="{{ url_for('login') }}">log in</a> or
+        <a href="{{ url_for('register') }}">register</a> to access personalized features.
+      </p>
+    {% endif %}
+  </div>
+</section>
+
 <!-- Features Section -->
 <section class="features section" id="features">
     <div class="section-header">
@@ -3803,6 +3875,7 @@ preview.style.display = 'none';
 </script>
 
 {% endblock %}
+
 
 ----- File: D:\ML Folders\ml_env\GitHub\GreenSathi\Green-Sathi-Fruit-Vegetable-Health-Scanner\templates\index.html -----
 <!DOCTYPE html>
@@ -4405,6 +4478,13 @@ preview.style.display = 'none';
     <section class="scan-section">
         <h2>Scan a Fruit or Plant</h2>
 
+        <!-- 🔒 Login Warning -->
+        {% if not current_user.is_authenticated %}
+        <div class="alert alert-warning" style="background: #fff3cd; color: #856404; padding: 1rem; border-radius: 6px; margin-bottom: 1rem; text-align: center;">
+            <strong>Note:</strong> You must <a href="{{ url_for('login') }}">log in</a> to analyze images and get recommendations.
+        </div>
+        {% endif %}
+
         <!-- Upload/Camera Tabs -->
         <div class="scan-options">
             <div class="option-tabs">
@@ -4448,10 +4528,8 @@ preview.style.display = 'none';
         <!-- Scan Result -->
         {% if result %}
         <div class="scan-result">
-            <!-- Image Preview -->
             <img src="{{ url_for('static', filename='uploads/' + result.image_filename) }}" alt="Scanned Image" class="scan-preview">
 
-            <!-- Meta Information -->
             <div class="result-header-box">
                 <div class="meta-item">
                     <span class="meta-label">Date:</span>
@@ -4465,9 +4543,12 @@ preview.style.display = 'none';
                     <span class="meta-label">Status:</span>
                     <span class="meta-value">{{ result.status }}</span>
                 </div>
+                <div class="meta-item">
+                    <span class="meta-label">Status:</span>
+                    <span class="meta-value">{{ result.analysis }}</span>
+                </div>
             </div>
 
-            <!-- Nutrition Section -->
             <div class="nutrition-box">
                 <h4>Nutrition</h4>
                 <div class="nutrition-grid">
@@ -4490,7 +4571,6 @@ preview.style.display = 'none';
                 </div>
             </div>
 
-            <!-- Synergic Fruits Section -->
             <div class="synergic-box">
                 <h4>Synergic Fruits</h4>
                 <div class="formatted-text">
@@ -4501,5 +4581,6 @@ preview.style.display = 'none';
         {% endif %}
     </section>
 </div>
+
 <script src="{{ url_for('static', filename='js/scan.js') }}"></script>
 {% endblock %}
