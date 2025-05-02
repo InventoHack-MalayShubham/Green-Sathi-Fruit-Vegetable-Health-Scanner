@@ -38,7 +38,7 @@ class GeminiHealthAnalyzer:
 Do not include any additional text or explanation. Only return the JSON object."""
 
             payload = {
-                "model": "google/gemini-2.0-flash-exp:free",
+                "model": "meta-llama/llama-4-maverick:free",
                 "messages": [
                     {
                         "role": "user",
