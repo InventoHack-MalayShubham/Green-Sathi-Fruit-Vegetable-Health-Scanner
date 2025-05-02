@@ -10,7 +10,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, current_user, login_required, login_user, logout_user
 from models import db, User, ScanHistory
 from werkzeug.utils import secure_filename
-from services.gemini_service import GeminiHealthAnalyzer
+from services.llama_service import LllamaHealthAnalyzer
 from services.usda_service import USDAClient
 from services.deepseek_service import DeepSeekRecommender
 import json
@@ -106,49 +106,50 @@ def home():
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'png', 'jpg', 'jpeg'}
-
 @app.route('/scan', methods=['GET', 'POST'])
-# @login_required
 def scan():
     if request.method == 'POST':
+        # Require login to process image
         if not current_user.is_authenticated:
             flash("Please log in to analyze images.")
             return redirect(url_for('login'))
+
         file = request.files.get('image')
         if not file or file.filename == '':
-            flash('No file selected')
-            return redirect(request.url)
+            flash('No file selected.')
+            return render_template('scan.html', result=None)
+        
         if not allowed_file(file.filename):
-            flash('Allowed file types: png, jpg, jpeg')
-            return redirect(request.url)
+            flash('Allowed file types: png, jpg, jpeg.')
+            return render_template('scan.html', result=None)
+
         filename = secure_filename(file.filename)
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(filepath)
-        
-        # Create result object early with default values
+
+        # Create result object with default structure
         result = type('Result', (), {
             'image_filename': filename,
             'date': datetime.now(),
             'fruit_name': '',
             'status': '',
-            # 'nutrition': {},
+            'nutrition': {},
             'synergic_fruits': '',
             'analysis': ''
         })()
-        
+
         try:
-            # Analyze with Gemini
-            gemini = GeminiHealthAnalyzer()
-            analysis = gemini.analyze_image(filepath)
-            result.fruit_name = analysis.get('item', '') if analysis and 'item' in analysis else ''
+            # Analyze with Lllama
+            Lllama = LllamaHealthAnalyzer()
+            analysis = Lllama.analyze_image(filepath)
+            result.fruit_name = analysis.get('item', '') if analysis else ''
             result.status = analysis.get('status', '') if analysis else ''
-            
+
             # Nutrition with USDA
             usda = USDAClient()
-            nutrition = usda.get_nutrition(result.fruit_name)
-            result.nutrition = nutrition if nutrition else {}
-            
-            # DeepSeek recommendations
+            result.nutrition = usda.get_nutrition(result.fruit_name) or {}
+
+            # Synergic fruit recommendation
             user_data = {
                 'weight': current_user.weight,
                 'height': current_user.height,
@@ -161,15 +162,15 @@ def scan():
                 'gender': current_user.gender,
                 'current_fruit': result.fruit_name
             }
+
             deepseek = DeepSeekRecommender()
-            synergic_fruits = deepseek.generate_recommendations(user_data)
-            result.synergic_fruits = synergic_fruits
-            
-            # Format the analysis
+            result.synergic_fruits = deepseek.generate_recommendations(user_data)
+
+            # Markdown-style summary
             result.analysis = f"**{result.fruit_name}**\n\n"
             result.analysis += f"Date: {result.date.strftime('%Y-%m-%d %H:%M')}\n\n"
             result.analysis += f"Status: {result.status}\n\n"
-            
+
             # Save to DB
             scan = ScanHistory(
                 user_id=current_user.id,
@@ -181,14 +182,15 @@ def scan():
             )
             db.session.add(scan)
             db.session.commit()
-            
+
         except Exception as e:
-            print(f"Error processing scan: {str(e)}")
+            print(f"Error processing scan: {e}")
             flash('Error processing the scan. Please try again.')
-            return redirect(request.url)
-            
+            return render_template('scan.html', result=None)
+
         return render_template('scan.html', result=result)
-        
+
+    # GET request
     return render_template('scan.html', result=None)
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -473,7 +475,7 @@ Give all the answers in english only.
             return "An unexpected error occurred while generating recommendations." 
 
 
------ File: D:\ML Folders\ml_env\GitHub\GreenSathi\Green-Sathi-Fruit-Vegetable-Health-Scanner\services\gemini_service.py -----
+----- File: D:\ML Folders\ml_env\GitHub\GreenSathi\Green-Sathi-Fruit-Vegetable-Health-Scanner\services\llama_service.py -----
 import base64
 import requests
 import json
@@ -483,11 +485,11 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
-class GeminiHealthAnalyzer:
+class LllamaHealthAnalyzer:
     def __init__(self, api_key=None):
-        self.api_key = api_key or os.getenv('GEMINI_KEY')
+        self.api_key = api_key or os.getenv('Lllama_KEY')
         if not self.api_key:
-            raise ValueError("GEMINI_KEY not found in environment variables")
+            raise ValueError("Lllama_KEY not found in environment variables")
         self.base_url = "https://openrouter.ai/api/v1/chat/completions"
         self.headers = {
             "Authorization": f"Bearer {self.api_key}",
@@ -514,7 +516,7 @@ class GeminiHealthAnalyzer:
 Do not include any additional text or explanation. Only return the JSON object."""
 
             payload = {
-                "model": "google/gemini-2.0-flash-exp:free",
+                "model": "meta-llama/llama-4-maverick:free",
                 "messages": [
                     {
                         "role": "user",
@@ -536,9 +538,9 @@ Do not include any additional text or explanation. Only return the JSON object."
             return self._parse_response(response.json())
 
         except Exception as e:
-            print(f"Gemini API Error: {str(e)}")
+            print(f"Lllama API Error: {str(e)}")
             return {
-                "error": f"Gemini API Error: {str(e)}",
+                "error": f"Lllama API Error: {str(e)}",
                 "item": "Sorry for incovinience, free trials have exhausted, trials will be refereshed at 5:00 AM. Unable to identify the item at the moment.",
                 "type": "Unknown",
                 "status": "uncertain",
@@ -2965,7 +2967,7 @@ preview.style.display = 'none';
 <style>
     :root {
         --primary: #8f8f8f;
-        --primary-light: #eff4ef;
+        --primary-light: #4c4d4c;
         --primary-dark: #646464;
         --secondary: #ff8f00;
         --secondary-light: #ffc046;
@@ -3684,19 +3686,33 @@ preview.style.display = 'none';
 </section>
 
 <!-- User Greeting Section -->
-<section class="user-greeting section">
-  <div class="container" style="text-align: center; margin-top: 2rem;">
+<section class="user-greeting section" 
+    style = "
+            background-color: #c7fcc7;
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin: 1.5rem auto;
+            max-width: 900px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            text-align: center;
+            font-family: 'Segoe UI', sans-serif;
+            color: #573b2c;
+        ">
+
+  <div class="container" style="text-align: center; margin-top: 1.5rem;">
     {% if current_user.is_authenticated %}
       <p style="font-size: 1.2rem;">
         Welcome back, <strong>{{ current_user.username }}</strong>! 🎉
       </p>
-      <p>
-        <a href="{{ url_for('profile') }}" class="btn btn-secondary">Go to Profile</a>
-        |
-        <a href="{{ url_for('logout') }}" class="btn btn-outline">Logout</a>
-      </p>
+      <div class="btn-group">
+        <p>
+            <a href="{{ url_for('profile') }}" class="btn btn-primary"style="background-color: #ffab64;" >Go to Profile </a>
+            |
+            <a href="{{ url_for('logout') }}" class="btn btn-outline">Logout</a>
+        </p>
+    </div>
     {% else %}
-      <p style="font-size: 1.2rem;">
+      <p style="font-size: 1.2rem;color:#fe8523;">
         Welcome to <strong>GreenSathi</strong>! 🚀 Please
         <a href="{{ url_for('login') }}">log in</a> or
         <a href="{{ url_for('register') }}">register</a> to access personalized features.

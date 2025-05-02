@@ -7,11 +7,11 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
-class GeminiHealthAnalyzer:
+class LllamaHealthAnalyzer:
     def __init__(self, api_key=None):
-        self.api_key = api_key or os.getenv('GEMINI_KEY')
+        self.api_key = api_key or os.getenv('Lllama_KEY')
         if not self.api_key:
-            raise ValueError("GEMINI_KEY not found in environment variables")
+            raise ValueError("Lllama_KEY not found in environment variables")
         self.base_url = "https://openrouter.ai/api/v1/chat/completions"
         self.headers = {
             "Authorization": f"Bearer {self.api_key}",
@@ -60,9 +60,9 @@ Do not include any additional text or explanation. Only return the JSON object."
             return self._parse_response(response.json())
 
         except Exception as e:
-            print(f"Gemini API Error: {str(e)}")
+            print(f"Lllama API Error: {str(e)}")
             return {
-                "error": f"Gemini API Error: {str(e)}",
+                "error": f"Lllama API Error: {str(e)}",
                 "item": "Sorry for incovinience, free trials have exhausted, trials will be refereshed at 5:00 AM. Unable to identify the item at the moment.",
                 "type": "Unknown",
                 "status": "uncertain",

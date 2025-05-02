@@ -4,7 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, current_user, login_required, login_user, logout_user
 from models import db, User, ScanHistory
 from werkzeug.utils import secure_filename
-from services.gemini_service import GeminiHealthAnalyzer
+from services.llama_service import LllamaHealthAnalyzer
 from services.usda_service import USDAClient
 from services.deepseek_service import DeepSeekRecommender
 import json
@@ -100,49 +100,50 @@ def home():
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'png', 'jpg', 'jpeg'}
-
 @app.route('/scan', methods=['GET', 'POST'])
-# @login_required
 def scan():
     if request.method == 'POST':
+        # Require login to process image
         if not current_user.is_authenticated:
             flash("Please log in to analyze images.")
             return redirect(url_for('login'))
+
         file = request.files.get('image')
         if not file or file.filename == '':
-            flash('No file selected')
-            return redirect(request.url)
+            flash('No file selected.')
+            return render_template('scan.html', result=None)
+        
         if not allowed_file(file.filename):
-            flash('Allowed file types: png, jpg, jpeg')
-            return redirect(request.url)
+            flash('Allowed file types: png, jpg, jpeg.')
+            return render_template('scan.html', result=None)
+
         filename = secure_filename(file.filename)
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(filepath)
-        
-        # Create result object early with default values
+
+        # Create result object with default structure
         result = type('Result', (), {
             'image_filename': filename,
             'date': datetime.now(),
             'fruit_name': '',
             'status': '',
-            # 'nutrition': {},
+            'nutrition': {},
             'synergic_fruits': '',
             'analysis': ''
         })()
-        
+
         try:
-            # Analyze with Gemini
-            gemini = GeminiHealthAnalyzer()
-            analysis = gemini.analyze_image(filepath)
-            result.fruit_name = analysis.get('item', '') if analysis and 'item' in analysis else ''
+            # Analyze with Lllama
+            Lllama = LllamaHealthAnalyzer()
+            analysis = Lllama.analyze_image(filepath)
+            result.fruit_name = analysis.get('item', '') if analysis else ''
             result.status = analysis.get('status', '') if analysis else ''
-            
+
             # Nutrition with USDA
             usda = USDAClient()
-            nutrition = usda.get_nutrition(result.fruit_name)
-            result.nutrition = nutrition if nutrition else {}
-            
-            # DeepSeek recommendations
+            result.nutrition = usda.get_nutrition(result.fruit_name) or {}
+
+            # Synergic fruit recommendation
             user_data = {
                 'weight': current_user.weight,
                 'height': current_user.height,
@@ -155,15 +156,15 @@ def scan():
                 'gender': current_user.gender,
                 'current_fruit': result.fruit_name
             }
+
             deepseek = DeepSeekRecommender()
-            synergic_fruits = deepseek.generate_recommendations(user_data)
-            result.synergic_fruits = synergic_fruits
-            
-            # Format the analysis
+            result.synergic_fruits = deepseek.generate_recommendations(user_data)
+
+            # Markdown-style summary
             result.analysis = f"**{result.fruit_name}**\n\n"
             result.analysis += f"Date: {result.date.strftime('%Y-%m-%d %H:%M')}\n\n"
             result.analysis += f"Status: {result.status}\n\n"
-            
+
             # Save to DB
             scan = ScanHistory(
                 user_id=current_user.id,
@@ -175,14 +176,15 @@ def scan():
             )
             db.session.add(scan)
             db.session.commit()
-            
+
         except Exception as e:
-            print(f"Error processing scan: {str(e)}")
+            print(f"Error processing scan: {e}")
             flash('Error processing the scan. Please try again.')
-            return redirect(request.url)
-            
+            return render_template('scan.html', result=None)
+
         return render_template('scan.html', result=result)
-        
+
+    # GET request
     return render_template('scan.html', result=None)
 
 @app.route('/login', methods=['GET', 'POST'])
