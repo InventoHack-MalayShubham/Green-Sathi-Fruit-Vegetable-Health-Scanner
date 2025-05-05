@@ -16,14 +16,19 @@ class LllamaHealthAnalyzer:
         self.headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
-            "HTTP-Referer": "https://freshcheck-pro.com",
+            "Referer": "https://freshcheck-pro.com",  # Fixed header name
             "X-Title": "FreshCheck Pro"
         }
         self.timeout = 30
+
     def analyze_image(self, image_path):
         try:
+            print(f"\n=== Analyzing image: {image_path} ===")
+            
+            # Read and encode image
             with open(image_path, "rb") as f:
                 b64_image = base64.b64encode(f.read()).decode("utf-8")
+                print("Image encoded successfully")
 
             prompt = """You are a produce quality analyzer. Analyze the image and return ONLY a valid JSON object with the following structure:
 {
@@ -35,70 +40,72 @@ class LllamaHealthAnalyzer:
     "storage_tips": "string"
 }
 
-Do not include any additional text or explanation. Only return the JSON object."""
+Important: Do not include any additional text, markdown, or explanation. Only return the JSON object."""
 
             payload = {
-                "model": "meta-llama/llama-4-maverick:free",
-                "messages": [
-                    {
-                        "role": "user",
-                        "content": [
-                            {"type": "text", "text": prompt},
-                            {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64_image}"}}
-                        ]
-                    }
-                ]
+                "model": "meta-llama/llama-4-maverick:free",  # Verified model
+                "messages": [{
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": prompt},
+                        {"type": "image_url", "image_url": {
+                            "url": f"data:image/jpeg;base64,{b64_image}",
+                            "detail": "auto"
+                        }}
+                    ]
+                }]
             }
 
+            print("Sending request to OpenRouter API...")
             response = requests.post(
                 self.base_url,
                 headers=self.headers,
                 json=payload,
-                timeout=30
+                timeout=self.timeout
             )
+            
+            # Debug logging
+            print(f"Status Code: {response.status_code}")
+            print(f"Response Headers: {response.headers}")
+            print(f"Response Content: {response.text[:300]}...")  # Truncated for readability
+
             response.raise_for_status()
             return self._parse_response(response.json())
 
         except Exception as e:
-            print(f"Lllama API Error: {str(e)}")
-            return {
-                "error": f"Lllama API Error: {str(e)}",
-                "item": "Sorry for incovinience, free trials have exhausted, trials will be refereshed at 5:00 AM. Unable to identify the item at the moment.",
-                "type": "Unknown",
-                "status": "uncertain",
-                "confidence": 0.0,
-                "issues": ["API Error"],
-                "storage_tips": "Unable to analyze due to technical issues"
-            }
+            print(f"\n!!! API Error: {str(e)}")
+            return self._error_response(e)
 
     def _parse_response(self, response):
         try:
             content = response["choices"][0]["message"]["content"]
-            # Try to find JSON in the response
-            start_idx = content.find('{')
-            end_idx = content.rfind('}') + 1
-            if start_idx == -1 or end_idx == 0:
-                raise ValueError("No JSON object found in response")
+            print(f"Raw API Response:\n{content}")
             
-            json_str = content[start_idx:end_idx]
+            # Clean JSON extraction
+            json_str = content.strip().replace('```json', '').replace('```', '').strip()
             result = json.loads(json_str)
             
-            # Validate required fields
+            # Validate response structure
             required_fields = ["item", "type", "status", "confidence", "issues", "storage_tips"]
             for field in required_fields:
                 if field not in result:
-                    raise ValueError(f"Missing required field: {field}")
+                    raise ValueError(f"Missing field: {field}")
             
+            print("Successfully parsed valid response")
             return result
             
         except Exception as e:
-            print(f"Response Parsing Error: {str(e)}")
-            return {
-                "error": f"Failed to parse response: {str(e)}",
-                "item": "Unknown",
-                "type": "Unknown",
-                "status": "uncertain",
-                "confidence": 0.0,
-                "issues": ["Parsing Error"],
-                "storage_tips": "Unable to analyze due to technical issues"
-            } 
+            print(f"JSON Parsing Error: {str(e)}")
+            return self._error_response(e, parsing=True)
+
+    def _error_response(self, error, parsing=False):
+        error_type = "Parsing" if parsing else "API"
+        return {
+            "error": f"{error_type} Error: {str(error)}",
+            "item": "Unable to analyze - Service Temporarily Unavailable",
+            "type": "Unknown",
+            "status": "uncertain",
+            "confidence": 0.0,
+            "issues": ["Technical Error"],
+            "storage_tips": "Please try again later"
+        }

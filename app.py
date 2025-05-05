@@ -100,10 +100,10 @@ def home():
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'png', 'jpg', 'jpeg'}
+
 @app.route('/scan', methods=['GET', 'POST'])
 def scan():
     if request.method == 'POST':
-        # Require login to process image
         if not current_user.is_authenticated:
             flash("Please log in to analyze images.")
             return redirect(url_for('login'))
@@ -112,7 +112,7 @@ def scan():
         if not file or file.filename == '':
             flash('No file selected.')
             return render_template('scan.html', result=None)
-        
+
         if not allowed_file(file.filename):
             flash('Allowed file types: png, jpg, jpeg.')
             return render_template('scan.html', result=None)
@@ -121,29 +121,37 @@ def scan():
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(filepath)
 
-        # Create result object with default structure
-        result = type('Result', (), {
+        # Use a dictionary for result instead of a dynamic object
+        result = {
             'image_filename': filename,
             'date': datetime.now(),
             'fruit_name': '',
             'status': '',
+            'confidence': analysis.get('confidence', 0),
+            'issues': analysis.get('issues', []),
+            'storage_tips': analysis.get('storage_tips', ''),
             'nutrition': {},
             'synergic_fruits': '',
             'analysis': ''
-        })()
+        }
 
         try:
-            # Analyze with Lllama
+            # Analyze image with Llama
             Lllama = LllamaHealthAnalyzer()
             analysis = Lllama.analyze_image(filepath)
-            result.fruit_name = analysis.get('item', '') if analysis else ''
-            result.status = analysis.get('status', '') if analysis else ''
 
-            # Nutrition with USDA
+            if not analysis:
+                flash("Failed to get a response from Llama API.")
+                return render_template('scan.html', result=None)
+
+            result['fruit_name'] = analysis.get('item', '')
+            result['status'] = analysis.get('status', '')
+
+            # Get nutrition info from USDA
             usda = USDAClient()
-            result.nutrition = usda.get_nutrition(result.fruit_name) or {}
+            result['nutrition'] = usda.get_nutrition(result['fruit_name']) or {}
 
-            # Synergic fruit recommendation
+            # Build user data for synergy recommendations
             user_data = {
                 'weight': current_user.weight,
                 'height': current_user.height,
@@ -154,33 +162,34 @@ def scan():
                 'allergies': current_user.allergies,
                 'activity_level': current_user.activity_level,
                 'gender': current_user.gender,
-                'current_fruit': result.fruit_name
+                'current_fruit': result['fruit_name']
             }
 
+            # Get synergic fruits
             deepseek = DeepSeekRecommender()
-            result.synergic_fruits = deepseek.generate_recommendations(user_data)
+            result['synergic_fruits'] = deepseek.generate_recommendations(user_data)
 
-            # Markdown-style summary
-            result.analysis = f"**{result.fruit_name}**\n\n"
-            result.analysis += f"Date: {result.date.strftime('%Y-%m-%d %H:%M')}\n\n"
-            result.analysis += f"Status: {result.status}\n\n"
+            # Build analysis summary
+            result['analysis'] = f"**{result['fruit_name']}**\n\n"
+            result['analysis'] += f"Date: {result['date'].strftime('%Y-%m-%d %H:%M')}\n\n"
+            result['analysis'] += f"Status: {result['status']}\n\n"
 
-            # Save to DB
+            # Save scan to database
             scan = ScanHistory(
                 user_id=current_user.id,
                 image_filename=filename,
-                fruit_name=result.fruit_name,
-                health_status=result.status,
-                nutrition=json.dumps(result.nutrition),
-                synergic_fruits=result.synergic_fruits
+                fruit_name=result['fruit_name'],
+                health_status=result['status'],
+                nutrition=json.dumps(result['nutrition']),
+                synergic_fruits=result['synergic_fruits']
             )
             db.session.add(scan)
             db.session.commit()
 
         except Exception as e:
-            print(f"Error processing scan: {e}")
-            flash('Error processing the scan. Please try again.')
-            return render_template('scan.html', result=None)
+            print(f"[ERROR] Scan processing failed: {e}")
+            flash('Error processing the scan. Please check the API key and try again.')
+            return redirect(request.url)
 
         return render_template('scan.html', result=result)
 
