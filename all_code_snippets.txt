@@ -107,7 +107,6 @@ def home():
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'png', 'jpg', 'jpeg'}
 
-
 @app.route('/scan', methods=['GET', 'POST'])
 def scan():
     if request.method == 'POST':
@@ -128,16 +127,19 @@ def scan():
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(filepath)
 
-        # Create default result structure
-        result = type('Result', (), {
+        # Use a dictionary for result instead of a dynamic object
+        result = {
             'image_filename': filename,
             'date': datetime.now(),
             'fruit_name': '',
             'status': '',
+            'confidence': analysis.get('confidence', 0),
+            'issues': analysis.get('issues', []),
+            'storage_tips': analysis.get('storage_tips', ''),
             'nutrition': {},
             'synergic_fruits': '',
             'analysis': ''
-        })()
+        }
 
         try:
             # Analyze image with Llama
@@ -148,12 +150,12 @@ def scan():
                 flash("Failed to get a response from Llama API.")
                 return render_template('scan.html', result=None)
 
-            result.fruit_name = analysis.get('item', '')
-            result.status = analysis.get('status', '')
+            result['fruit_name'] = analysis.get('item', '')
+            result['status'] = analysis.get('status', '')
 
             # Get nutrition info from USDA
             usda = USDAClient()
-            result.nutrition = usda.get_nutrition(result.fruit_name) or {}
+            result['nutrition'] = usda.get_nutrition(result['fruit_name']) or {}
 
             # Build user data for synergy recommendations
             user_data = {
@@ -166,26 +168,26 @@ def scan():
                 'allergies': current_user.allergies,
                 'activity_level': current_user.activity_level,
                 'gender': current_user.gender,
-                'current_fruit': result.fruit_name
+                'current_fruit': result['fruit_name']
             }
 
             # Get synergic fruits
             deepseek = DeepSeekRecommender()
-            result.synergic_fruits = deepseek.generate_recommendations(user_data)
+            result['synergic_fruits'] = deepseek.generate_recommendations(user_data)
 
             # Build analysis summary
-            result.analysis = f"**{result.fruit_name}**\n\n"
-            result.analysis += f"Date: {result.date.strftime('%Y-%m-%d %H:%M')}\n\n"
-            result.analysis += f"Status: {result.status}\n\n"
+            result['analysis'] = f"**{result['fruit_name']}**\n\n"
+            result['analysis'] += f"Date: {result['date'].strftime('%Y-%m-%d %H:%M')}\n\n"
+            result['analysis'] += f"Status: {result['status']}\n\n"
 
             # Save scan to database
             scan = ScanHistory(
                 user_id=current_user.id,
                 image_filename=filename,
-                fruit_name=result.fruit_name,
-                health_status=result.status,
-                nutrition=json.dumps(result.nutrition),
-                synergic_fruits=result.synergic_fruits
+                fruit_name=result['fruit_name'],
+                health_status=result['status'],
+                nutrition=json.dumps(result['nutrition']),
+                synergic_fruits=result['synergic_fruits']
             )
             db.session.add(scan)
             db.session.commit()
@@ -193,7 +195,7 @@ def scan():
         except Exception as e:
             print(f"[ERROR] Scan processing failed: {e}")
             flash('Error processing the scan. Please check the API key and try again.')
-            return render_template('scan.html', result=None)
+            return redirect(request.url)
 
         return render_template('scan.html', result=result)
 
@@ -2981,7 +2983,7 @@ preview.style.display = 'none';
 <style>
     :root {
         --primary: #8f8f8f;
-        --primary-light: #4c4d4c;
+        --primary-light: #eff4ef;
         --primary-dark: #646464;
         --secondary: #ff8f00;
         --secondary-light: #ffc046;
@@ -3700,33 +3702,19 @@ preview.style.display = 'none';
 </section>
 
 <!-- User Greeting Section -->
-<section class="user-greeting section" 
-    style = "
-            background-color: #c7fcc7;
-            border-radius: 16px;
-            padding: 1.5rem;
-            margin: 1.5rem auto;
-            max-width: 900px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-            text-align: center;
-            font-family: 'Segoe UI', sans-serif;
-            color: #573b2c;
-        ">
-
-  <div class="container" style="text-align: center; margin-top: 1.5rem;">
+<section class="user-greeting section">
+  <div class="container" style="text-align: center; margin-top: 2rem;">
     {% if current_user.is_authenticated %}
       <p style="font-size: 1.2rem;">
         Welcome back, <strong>{{ current_user.username }}</strong>! 🎉
       </p>
-      <div class="btn-group">
-        <p>
-            <a href="{{ url_for('profile') }}" class="btn btn-primary"style="background-color: #ffab64;" >Go to Profile </a>
-            |
-            <a href="{{ url_for('logout') }}" class="btn btn-outline">Logout</a>
-        </p>
-    </div>
+      <p>
+        <a href="{{ url_for('profile') }}" class="btn btn-secondary">Go to Profile</a>
+        |
+        <a href="{{ url_for('logout') }}" class="btn btn-outline">Logout</a>
+      </p>
     {% else %}
-      <p style="font-size: 1.2rem;color:#fe8523;">
+      <p style="font-size: 1.2rem;">
         Welcome to <strong>GreenSathi</strong>! 🚀 Please
         <a href="{{ url_for('login') }}">log in</a> or
         <a href="{{ url_for('register') }}">register</a> to access personalized features.
